@@ -1,5 +1,5 @@
 import torch
-import self_attention as self_attention
+import self_attention
 from torch import nn
 
 class MultiHeadAttention(nn.Module):
@@ -26,18 +26,27 @@ class MultiHeadAttention(nn.Module):
         self.num_heads = num_heads
         self.head_dim = hidden_dim // num_heads
 
-        self.QVK_proj = nn.Linear(input_dim, 3 * hidden_dim)
-        self.O_proj = nn.Linear(hidden_dim, hidden_dim)
+        self.QVK_proj = nn.Linear(input_dim, 3 * hidden_dim, bias=False)
+        self.O_proj = nn.Linear(hidden_dim, hidden_dim, bias=False)
 
         self._reset_params()
 
     def _reset_params(self):
         """Initialize weights and biases for projection layers."""
         nn.init.xavier_uniform_(self.QVK_proj.weight)
-        self.QVK_proj.bias.data.fill_(0)
         nn.init.xavier_uniform_(self.O_proj.weight)
-        self.O_proj.bias.data.fill_(0)
 
-    def forward(self, x):
-        return
+    def forward(self, x: torch.Tensor, mask: bool = False):
+        """Computes Multi-Head attention by combining outputs of each head."""
+        batch_size, seq_length, _ = x.size()
+        QKV = self.QVK_proj(x)
+        QKV = QKV.reshape(batch_size, seq_length, self.num_heads, 3 * self.head_dim)
+        QKV = QKV.permute(0, 2, 1, 3)   # batch, head, seqlen, dim
+        Q, K, V = QKV.chunk(3, dim=-1)
 
+        attn_output, attn_weights = self_attention.scaled_dot_product(Q, K, V, mask=mask)
+        attn_output = attn_output.permute(0, 2, 1, 3) # batch, seqlen, head, dim
+        attn_output = attn_output.reshape(batch_size, seq_length, self.hidden_dim)
+        O = self.O_proj(attn_output)
+
+        return O, attn_weights
