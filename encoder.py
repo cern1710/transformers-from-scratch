@@ -22,9 +22,28 @@ class EncoderBlock(nn.Module):
         self.norm2 = nn.LayerNorm(input_dim)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, x: torch.Tensor, mask=False):
+    def forward(self, x: torch.Tensor, mask: bool = False):
         attn_output = self.self_attention(x, mask=mask)
         x = self.norm1(x + self.dropout(attn_output))
         linear_output = self.linear_MLP(x)
         x = self.norm2(x + self.dropout(linear_output))
         return x
+
+class TransformerEncoder(nn.Module):
+    def __init__(self, num_layers: int, **block_args):
+        super().__init__()
+        self.layers =nn.Module([EncoderBlock(**block_args)
+                                for _ in range(num_layers)])
+
+    def forward(self, x: torch.Tensor, mask: bool = False):
+        for layer in self.layers:
+            x = layer(x, mask=mask)
+        return x
+
+    def get_attention_maps(self, x: torch.Tensor, mask: bool = False):
+        attn_maps = []
+        for layer in self.layers:
+            _, attn_map = layer.self_attention(x, mask=mask)
+            attn_maps.append(attn_map)
+            x = layer(x)
+        return attn_maps
