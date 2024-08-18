@@ -20,6 +20,6 @@ def scaled_dot_product(Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor,
     attention = torch.matmul(Q, K.transpose(-2, -1)) / sqrt_dk
     if mask:
         attention = attention.masked_fill(mask == 0, -1e16)
-    value_weights = softmax(attention)
-    attention = torch.matmul(value_weights, V)
-    return attention, value_weights
+    attn_weights = softmax(attention)
+    attn_output = torch.matmul(attn_weights, V)
+    return attn_output, attn_weights
