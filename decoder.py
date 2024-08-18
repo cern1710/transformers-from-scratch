@@ -1,5 +1,6 @@
 import multihead_attention as mult
 from torch import nn
+import torch
 
 class DecoderBlock(nn.Module):
     def __init__(self, input_dim: int, num_heads: int, ff_dim: int, dropout=0.0):
@@ -24,3 +25,16 @@ class DecoderBlock(nn.Module):
         self.norm2 = nn.LayerNorm(input_dim)
         self.norm3 = nn.LayerNorm(input_dim)
         self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x: torch.Tensor, encoder_output: torch.Tensor,
+                self_mask: bool = False, cross_mask: bool = False):
+        attn_output = self.self_attention(x, mask=self_mask)
+        x = self.norm1(x + self.dropout(attn_output))
+
+        # need to fix this
+        attn_output = self.cross_attention(x, mask=cross_mask)
+        x = self.norm2(x + self.dropout(attn_output))
+
+        linear_output = self.linear_MLP(x)
+        x = self.norm3(x + self.dropout(linear_output))
+        return x
