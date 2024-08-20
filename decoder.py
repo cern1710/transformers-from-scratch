@@ -28,11 +28,12 @@ class DecoderBlock(nn.Module):
 
     def forward(self, x: torch.Tensor, encoder_output: torch.Tensor,
                 self_mask: bool = False, cross_mask: bool = False):
-        attn_output = self.self_attention(x, mask=self_mask)
+        attn_output = self.self_attention(x, x, x, mask=self_mask)
         x = self.norm1(x + self.dropout(attn_output))
 
-        # need to fix this
-        attn_output = self.cross_attention(x, mask=cross_mask)
+        # Cross-attention layer, where KV are encoder's output
+        attn_output = self.cross_attention(x, encoder_output,
+                                           encoder_output, mask=cross_mask)
         x = self.norm2(x + self.dropout(attn_output))
 
         linear_output = self.linear_MLP(x)
