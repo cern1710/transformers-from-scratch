@@ -39,7 +39,7 @@ class MultiHeadAttention(nn.Module):
         nn.init.xavier_uniform_(self.O_proj.weight)
 
     def forward(self, Q: torch.Tensor,K: torch.Tensor,
-                V: torch.Tensor, mask: bool = False):
+                V: torch.Tensor, mask: torch.Tensor = None):
         """Computes Multi-Head attention by combining outputs of each head."""
         batch_size, seq_length, _ = Q.size()
 

@@ -13,7 +13,7 @@ def softmax(x: torch.Tensor) -> torch.Tensor:
     return probs
 
 def scaled_dot_product(Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor,
-                       mask: bool=False) -> Tuple[torch.Tensor, torch.Tensor]:
+                       mask: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor]:
     """Attention function using Scaled Dot Product Attention."""
     # Hidden dimensionality for queries Q and keys K
     sqrt_dk = torch.sqrt(torch.tensor(Q.size()[-1], dtype=torch.float32))

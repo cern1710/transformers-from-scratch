@@ -27,7 +27,8 @@ class DecoderBlock(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x: torch.Tensor, encoder_output: torch.Tensor,
-                self_mask: bool = False, cross_mask: bool = False):
+                self_mask: torch.Tensor = None,
+                cross_mask: torch.Tensor = None):
         attn_output = self.self_attention(x, x, x, mask=self_mask)
         x = self.norm1(x + self.dropout(attn_output))
 

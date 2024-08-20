@@ -22,7 +22,7 @@ class EncoderBlock(nn.Module):
         self.norm2 = nn.LayerNorm(input_dim)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, x: torch.Tensor, mask: bool = False):
+    def forward(self, x: torch.Tensor, mask: torch.Tensor = None):
         # Add residual connections to self-attention and MLP layers
         attn_output = self.self_attention(x, x, x, mask=mask)
         x = self.norm1(x + self.dropout(attn_output))
@@ -36,12 +36,12 @@ class TransformerEncoder(nn.Module):
         self.layers =nn.ModuleList([EncoderBlock(**block_args)
                                     for _ in range(num_layers)])
 
-    def forward(self, x: torch.Tensor, mask: bool = False):
+    def forward(self, x: torch.Tensor, mask: torch.Tensor = None):
         for layer in self.layers:
             x = layer(x, mask=mask)
         return x
 
-    def get_attention_maps(self, x: torch.Tensor, mask: bool = False):
+    def get_attention_maps(self, x: torch.Tensor, mask: torch.Tensor = None):
         attn_maps = []
         for layer in self.layers:
             _, attn_map = layer.self_attention(x, x, x, mask=mask)

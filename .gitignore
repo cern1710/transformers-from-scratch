@@ -1,2 +1,4 @@
 .DS_Store
 data/
+path/
+__pycache__/
