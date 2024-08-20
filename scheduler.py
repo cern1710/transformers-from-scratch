@@ -19,7 +19,7 @@ class ExponentialDecayScheduler(optim.lr_scheduler._LRScheduler):
             lr_factor = np.exp(-decay)
         return lr_factor
 
-class CosineDecayScheduler(optim.lr_scheduler._LRScheduler):
+class CosineWarmupScheduler(optim.lr_scheduler._LRScheduler):
     def __init__(self, optimizer, warmup, max_iter):
         self.warmup = warmup
         self.max_iter = max_iter
