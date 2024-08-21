@@ -3,13 +3,15 @@ import self_attention
 from torch import nn
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, input_dim: int, hidden_dim: int, num_heads: int):
+    def __init__(self, input_dim: int, hidden_dim: int,
+                 num_heads: int, dropout: float = 0.0):
         """Multi-Head Attention layer constructor method.
 
         Args:
             input_dim (int): Dimensionality of input features.
             hidden_dim (int): Dimensionality of embedding space.
             num_heads (int): Number of attention heads.
+            dropout (float): Dropout rate. Default to 0.0.
 
         Attributes:
             hidden_dim (int): Hidden dimension.
@@ -29,6 +31,8 @@ class MultiHeadAttention(nn.Module):
         self.Q_proj = nn.Linear(input_dim, hidden_dim, bias=False)
         self.KV_proj = nn.Linear(input_dim, 2 * hidden_dim, bias=False)
         self.O_proj = nn.Linear(hidden_dim, hidden_dim, bias=False)
+
+        self.dropout = nn.Dropout(dropout)
 
         self._reset_params()
 
@@ -55,8 +59,10 @@ class MultiHeadAttention(nn.Module):
                       self.head_dim).permute(0, 2, 1, 3)
 
         attn_output, attn_weights = self_attention.scaled_dot_product(Q, K, V, mask=mask)
+        attn_output = self.dropout(attn_output)
         attn_output = attn_output.permute(0, 2, 1, 3).reshape(batch_size, seq_length,
                                                               self.hidden_dim)
         O = self.O_proj(attn_output)
+        O = self.dropout(O)
 
         return O, attn_weights
