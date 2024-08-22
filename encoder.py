@@ -1,6 +1,7 @@
 import multihead_attention as mult
 from torch import nn
 import torch
+import layer_norm as ln
 
 class EncoderBlock(nn.Module):
     def __init__(self, input_dim: int, num_heads: int, ff_dim: int, dropout=0.0):
@@ -18,8 +19,8 @@ class EncoderBlock(nn.Module):
         )
 
         # Layers between main ones
-        self.norm1 = nn.LayerNorm(input_dim)
-        self.norm2 = nn.LayerNorm(input_dim)
+        self.norm1 = ln.LayerNorm(input_dim)
+        self.norm2 = ln.LayerNorm(input_dim)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x: torch.Tensor, mask: torch.Tensor = None):

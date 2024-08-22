@@ -1,4 +1,5 @@
 import multihead_attention as mult
+import layer_norm as ln
 from torch import nn
 import torch
 
@@ -21,9 +22,9 @@ class DecoderBlock(nn.Module):
         )
 
         # Layers between main ones
-        self.norm1 = nn.LayerNorm(input_dim)
-        self.norm2 = nn.LayerNorm(input_dim)
-        self.norm3 = nn.LayerNorm(input_dim)
+        self.norm1 = ln.LayerNorm(input_dim)
+        self.norm2 = ln.LayerNorm(input_dim)
+        self.norm3 = ln.LayerNorm(input_dim)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x: torch.Tensor, encoder_output: torch.Tensor,
@@ -46,7 +47,7 @@ class TransformerDecoder(nn.Module):
         super().__init__()
         self.layers = nn.ModuleList([DecoderBlock(**block_args)
                                      for _ in range(num_layers)])
-        self.norm = nn.LayerNorm(block_args['input_dim'])
+        self.norm = ln.LayerNorm(block_args['input_dim'])
 
     def forward(self, x: torch.Tensor, encoder_output: torch.Tensor,
                 self_mask: torch.Tensor = None,

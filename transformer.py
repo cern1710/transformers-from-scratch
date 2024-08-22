@@ -5,6 +5,7 @@ import positional_encoding as pe
 import encoder as enc
 import scheduler as sch
 import decoder as dec
+import layer_norm as ln
 
 class TransformerPredictor(nn.Module):
     def __init__(self, input_dim: int, model_dim: int,
@@ -53,7 +54,7 @@ class TransformerPredictor(nn.Module):
         # Classifier per sequence
         self.output_network = nn.Sequential(
             nn.Linear(self.model_dim, self.model_dim),
-            nn.LayerNorm(self.model_dim),
+            ln.LayerNorm(self.model_dim),
             nn.ReLU(inplace=True),
             nn.Dropout(self.dropout),
             nn.Linear(self.model_dim, self.num_classes)
