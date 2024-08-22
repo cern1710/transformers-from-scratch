@@ -4,6 +4,7 @@ from torch import nn, optim
 import positional_encoding as pe
 import encoder as enc
 import scheduler as sch
+import decoder as dec
 
 class TransformerPredictor(nn.Module):
     def __init__(self, input_dim: int, model_dim: int,
@@ -34,7 +35,14 @@ class TransformerPredictor(nn.Module):
         self.positional_encoding = pe.PositionalEncoding(self.model_dim)
 
         # Transformer architecture
-        self.transformer = enc.TransformerEncoder(
+        self.encoder = enc.TransformerEncoder(
+            num_layers=self.num_layers,
+            input_dim=self.model_dim,
+            ff_dim=self.model_dim * 2,
+            num_heads=self.num_heads,
+            dropout=self.dropout
+        )
+        self.decoder = dec.TransformerDecoder(
             num_layers=self.num_layers,
             input_dim=self.model_dim,
             ff_dim=self.model_dim * 2,
@@ -52,22 +60,36 @@ class TransformerPredictor(nn.Module):
         )
 
     def forward(self, x: torch.Tensor, mask: torch.Tensor = None,
-                include_positional_encoding: bool = True):
+                include_positional_encoding: bool = True,
+                include_decoder: bool = True):
         x = self.input_network(x)
         if include_positional_encoding:
             x = self.positional_encoding(x)
-        x = self.transformer(x, mask=mask)
+        if include_decoder:
+            encoder_output = self.encoder(x, mask=mask)
+            x = self.decoder(x, encoder_output, self_mask=mask, cross_mask=mask)
+        else:
+            x = self.encoder(x, mask=mask)
         x = self.output_network(x)
         return x
 
     @torch.no_grad()
     def get_attention_maps(self, x: torch.Tensor, mask: torch.Tensor = None,
-                           include_positional_encoding: bool = True):
+                           include_positional_encoding: bool = True,
+                           include_decoder: bool = True):
         x = self.input_network(x)
         if include_positional_encoding:
             x = self.positional_encoding(x)
-        attn_maps = self.transformer.get_attention_maps(x, mask=mask)
-        return attn_maps
+
+        encoder_output = self.encoder.get_attention_maps(x, mask=mask)
+
+        if include_decoder:
+            decoder_output = self.decoder.get_attention_maps(
+                x, encoder_output[-1], self_mask=mask, cross_mask=mask
+            )
+            return decoder_output
+        else:
+            return encoder_output
 
     def configure_optimizer(self):
         optimizer = optim.Adam(self.parameters())

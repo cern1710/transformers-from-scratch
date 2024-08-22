@@ -40,3 +40,38 @@ class DecoderBlock(nn.Module):
         linear_output = self.linear_MLP(x)
         x = self.norm3(x + self.dropout(linear_output))
         return x
+
+class TransformerDecoder(nn.Module):
+    def __init__(self, num_layers: int, **block_args):
+        super().__init__()
+        self.layers = nn.ModuleList([DecoderBlock(**block_args)
+                                     for _ in range(num_layers)])
+        self.norm = nn.LayerNorm(block_args['input_dim'])
+
+    def forward(self, x: torch.Tensor, encoder_output: torch.Tensor,
+                self_mask: torch.Tensor = None,
+                cross_mask: torch.Tensor = None):
+        for layer in self.layers:
+            x = layer(x, encoder_output,
+                      self_mask=self_mask, cross_mask=cross_mask)
+        return self.norm(x)
+
+    def get_attention_maps(self, x: torch.Tensor, encoder_output: torch.Tensor,
+                           self_mask: torch.Tensor = None,
+                           cross_mask: torch.Tensor = None):
+        attn_maps = []
+        for layer in self.layers:
+            self_attn_output, self_attn_map = layer.self_attention(
+                x, x, x, mask=self_mask
+            )
+            x = layer.norm1(x + layer.dropout(self_attn_output))
+            cross_attn_output, cross_attn_map = layer.cross_attention(
+                x, encoder_output, encoder_output, mask=cross_mask
+            )
+            x = layer.norm2(x + layer.dropout(cross_attn_output))
+            x = layer.norm3(x + layer.dropout(layer.linear_MLP(x)))
+            attn_maps.append({
+                'self_attn_map': self_attn_map,
+                'cross_attn_map': cross_attn_map
+            })
+        return attn_maps
