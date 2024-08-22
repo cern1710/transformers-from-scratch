@@ -2,3 +2,5 @@
 data/
 path/
 __pycache__/
+
+attention_maps.png
