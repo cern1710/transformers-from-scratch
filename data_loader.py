@@ -30,10 +30,13 @@ def load_data(batch_size: int = 128,
     """
     if custom_train_transform is not None:
         train_transform = custom_train_transform
+    else:
+        train_transform = ViT_B_32_Weights.IMAGENET1K_V1.transforms()
+
     if custom_test_transform is not None:
         test_transform = custom_test_transform
-    if custom_train_transform is None and custom_test_transform is None:
-        train_transform = test_transform = ViT_B_32_Weights.IMAGENET1K_V1.transforms()
+    else:
+         test_transform = ViT_B_32_Weights.IMAGENET1K_V1.transforms()
 
     train_set = CIFAR10(root=root, train=True, download=True,
                         transform=train_transform)
@@ -53,7 +56,7 @@ def load_data(batch_size: int = 128,
 
     train_loader = DataLoader(train_set, batch_size=batch_size,
                               shuffle=shuffle, drop_last=drop_last,
-                              num_workers=num_workers)
+                              num_workers=num_workers, pin_memory=True)
     test_loader = DataLoader(test_set, batch_size=batch_size,
                              shuffle=False, drop_last=False,
                              num_workers=num_workers)
