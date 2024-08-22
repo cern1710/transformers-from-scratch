@@ -82,7 +82,7 @@ class ViTAttention(nn.Module):
         super().__init__()
         self.layer_norm1 = ln.LayerNorm(input_dim)
         self.attn = MultiHeadAttention(
-            input_dim, hidden_dim, num_heads, dropout=dropout
+            input_dim, input_dim, num_heads, dropout=dropout
         )
         self.layer_norm2 = ln.LayerNorm(input_dim)
         self.linear = nn.Sequential(
