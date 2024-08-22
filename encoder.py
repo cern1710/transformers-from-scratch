@@ -24,7 +24,7 @@ class EncoderBlock(nn.Module):
 
     def forward(self, x: torch.Tensor, mask: torch.Tensor = None):
         # Add residual connections to self-attention and MLP layers
-        attn_output = self.self_attention(x, x, x, mask=mask)
+        attn_output, _ = self.self_attention(x, x, x, mask=mask)
         x = self.norm1(x + self.dropout(attn_output))
         linear_output = self.linear_MLP(x)
         x = self.norm2(x + self.dropout(linear_output))
