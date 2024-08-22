@@ -61,7 +61,7 @@ class TransformerPredictor(nn.Module):
 
     def forward(self, x: torch.Tensor, mask: torch.Tensor = None,
                 include_positional_encoding: bool = True,
-                include_decoder: bool = True):
+                include_decoder: bool = False):
         x = self.input_network(x)
         if include_positional_encoding:
             x = self.positional_encoding(x)
@@ -76,7 +76,7 @@ class TransformerPredictor(nn.Module):
     @torch.no_grad()
     def get_attention_maps(self, x: torch.Tensor, mask: torch.Tensor = None,
                            include_positional_encoding: bool = True,
-                           include_decoder: bool = True):
+                           include_decoder: bool = False):
         x = self.input_network(x)
         if include_positional_encoding:
             x = self.positional_encoding(x)
