@@ -1,8 +1,9 @@
 import torch
-from torch import nn
+from torch import nn, optim
 
 import positional_encoding as pe
 import encoder as enc
+import scheduler as sch
 
 class TransformerPredictor(nn.Module):
     def __init__(self, input_dim: int, model_dim: int,
@@ -58,3 +59,21 @@ class TransformerPredictor(nn.Module):
         x = self.transformer(x, mask=mask)
         x = self.output_net(x)
         return x
+
+    @torch.no_grad()
+    def get_attention_maps(self, x: torch.Tensor, mask: torch.Tensor = None,
+                           include_positional_encoding: bool = True):
+        x = self.input_network(x)
+        if include_positional_encoding:
+            x = self.positional_encoding(x)
+        attn_maps = self.transformer.get_attention_maps(x, mask=mask)
+        return attn_maps
+
+    def configure_optimizer(self):
+        optimizer = optim.Adam(self.parameters)
+        lr_scheduler = sch.ExponentialDecayScheduler(
+            optimizer=optimizer,
+            warmup=self.warmup,
+            max_iter=self.max_iter
+        )
+        return [optimizer], [{'scheduler': lr_scheduler, 'interval': 'step'}]
