@@ -3,14 +3,14 @@ from torchvision.models import ViT_B_32_Weights
 from torchvision.datasets import CIFAR10
 import torch
 
-def load_data(batch_size: int=128,
-              shuffle: bool=True,
+def load_data(batch_size: int = 128,
+              shuffle: bool = True,
               drop_last: bool = True,
               num_workers: int = 4,
-              root: str='./data',
-              val_split: float=0,
-              custom_train_transform=None,
-              custom_test_transform=None):
+              root: str = './data',
+              val_split: float = 0,
+              custom_train_transform = None,
+              custom_test_transform = None):
     """Load CIFAR-10 dataset with optional preprocessing.
 
     Parameters:
