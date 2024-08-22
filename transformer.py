@@ -53,11 +53,11 @@ class TransformerPredictor(nn.Module):
 
     def forward(self, x: torch.Tensor, mask: torch.Tensor = None,
                 include_positional_encoding: bool = True):
-        x = self.input_net(x)
+        x = self.input_network(x)
         if include_positional_encoding:
             x = self.positional_encoding(x)
         x = self.transformer(x, mask=mask)
-        x = self.output_net(x)
+        x = self.output_network(x)
         return x
 
     @torch.no_grad()
@@ -70,7 +70,7 @@ class TransformerPredictor(nn.Module):
         return attn_maps
 
     def configure_optimizer(self):
-        optimizer = optim.Adam(self.parameters)
+        optimizer = optim.Adam(self.parameters())
         lr_scheduler = sch.ExponentialDecayScheduler(
             optimizer=optimizer,
             warmup=self.warmup,
