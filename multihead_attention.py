@@ -1,5 +1,6 @@
 import torch
 import self_attention
+import layer_norm as ln
 from torch import nn
 
 class MultiHeadAttention(nn.Module):
@@ -66,3 +67,34 @@ class MultiHeadAttention(nn.Module):
         O = self.dropout(O)
 
         return O, attn_weights
+
+class ViTAttention(nn.Module):
+    def __init__(self, input_dim: int, hidden_dim: int,
+                 num_heads: int, dropout: float = 0.0):
+        """Pre-LN attention block for the ViT model.
+
+        Args:
+            input_dim (int): Dimensionality of input features.
+            hidden_dim (int): Dimensionality of embedding space.
+            num_heads (int): Number of attention heads.
+            dropout (float): Dropout rate. Default to 0.0.
+        """
+        super().__init__()
+        self.layer_norm1 = ln.LayerNorm(input_dim)
+        self.attn = MultiHeadAttention(
+            input_dim, hidden_dim, num_heads, dropout=dropout
+        )
+        self.layer_norm2 = ln.LayerNorm(input_dim)
+        self.linear = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, input_dim),
+            nn.Dropout(dropout)
+        )
+
+    def forward(self, x: torch.Tensor):
+        input = self.layer_norm1(x)
+        x = x + self.attn(input, input, input)[0]
+        x = x + self.linear(self.layer_norm2(x))
+        return x
