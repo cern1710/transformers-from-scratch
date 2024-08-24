@@ -7,7 +7,7 @@ from torchvision import transforms
 
 device = torch.device('mps')
 
-def train(model, train_loader, optimizer, criterion):
+def train(model, train_loader, optimizer, criterion, clip_grad_norm: bool = True):
     model.train()
     total_loss, accuracy, total = 0, 0, 0
 
@@ -19,6 +19,8 @@ def train(model, train_loader, optimizer, criterion):
         pred = model(inputs)
         loss = criterion(pred.view(-1, pred.size(-1)), labels.view(-1))
         loss.backward()
+        if clip_grad_norm:
+            nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
 
         total_loss += loss.item()
@@ -57,7 +59,7 @@ def train_vit(**kwargs):
 
     criterion = nn.CrossEntropyLoss()
 
-    num_epochs = 20
+    num_epochs = 50
     best_val_accuracy = 0
     best_model_path = os.path.join("./path", "vit_cifar10.pth")
 
@@ -112,6 +114,6 @@ if __name__ == "__main__":
         num_channels=3,
         patch_size=4,
         num_patches=64,
-        dropout=0.2,
-        learning_rate=3e-4
+        dropout=0.1,
+        learning_rate=1e-3
     )
