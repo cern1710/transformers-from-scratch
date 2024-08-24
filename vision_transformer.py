@@ -9,7 +9,7 @@ class VisionTransformer(nn.Module):
     def __init__(self, input_dim: int, hidden_dim: int, num_classes: int,
                  num_heads: int, num_layers: int, num_channels: int,
                  patch_size: int, num_patches: int, learning_rate: float,
-                 dropout: float = 0.0):
+                 dropout: float = 0.0, warmup: int = 50, max_iter: int = 1000):
         super().__init__()
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
@@ -20,6 +20,8 @@ class VisionTransformer(nn.Module):
         self.patch_size = patch_size
         self.num_patches = num_patches
         self.learning_rate = learning_rate
+        self.warmup = warmup
+        self.max_iter = max_iter
 
         self.dropout = nn.Dropout(dropout)
         self.cls_token = nn.Parameter(torch.randn(1, 1, input_dim))
@@ -49,6 +51,8 @@ class VisionTransformer(nn.Module):
 
         x = x.reshape(B, C, (H // P), P, (W // P), P)
         x = x.permute(0, 2, 4, 1, 3, 5).flatten(1, 2)
+        x = x.flatten(2, 4)
+
         return x
 
     def forward(self, x: torch.Tensor):
@@ -70,9 +74,11 @@ class VisionTransformer(nn.Module):
 
     def configure_optimizer(self):
         optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
-        lr_scheduler = sch.MultiStepLRScheduler(
+        lr_scheduler = sch.CosineWarmupScheduler(
             optimizer=optimizer,
-            milestones=[100, 150],
-            gamma=0.1
+            warmup=self.warmup,
+            max_iter=self.max_iter
+            # milestones=[100, 150],
+            # gamma=0.1
         )
         return [optimizer], [lr_scheduler]
